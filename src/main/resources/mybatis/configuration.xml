@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<!-- 属性 
+		 在 properties 元素体内指定的属性首先被读取。 
+		 然后根据 properties 元素中的 resource 属性读取类路径下属性文件或根据url 属性指定的路径读取属性文件，并覆盖已读取的同名属性。
+		 最后读取作为方法参数传递的属性，并覆盖已读取的同名属性。
+		  
+		 因此，通过方法参数传递的属性具有最高优先级，resource/url属性中指定的配置文件次之，最低优先级的是 properties 属性中指定的属性。 -->
+	<properties resource="db.properties" />
+
+	<!-- 设置 这是 MyBatis 中极为重要的调整设置，它们会改变 MyBatis 的运行时行为。 -->
+	<settings>
+		<!-- 懒加载(延迟加载),默认为false -->
+		<setting name="lazyLoadingEnabled" value="true"/>
+		<!-- 设置为按需加载(消极加载),默认为积极加载 -->
+		<setting name="aggressiveLazyLoading" value="false"/>
+		<!-- 开启二级缓存 -->
+		<setting name="cacheEnabled" value="true"/>
+	</settings>
+
+	<!-- 类型别名 
+		 类型别名是为 Java 类型设置一个短的名字。 它只和 XML 配置有关，存在的意义仅在于用来减少类完全限定名的冗余 -->
+	<typeAliases>
+		<typeAlias type="com.zking.ssm.model.User" alias="user" />
+		<typeAlias type="com.zking.ssm.model.UserCustom" alias="userCustom" />
+		<typeAlias type="com.zking.ssm.model.UserQueryOv" alias="userQueryOv" />
+	</typeAliases>
+	<!-- 类型处理器 
+		 无论是 MyBatis 在预处理语句（PreparedStatement）中设置一个参数时， 还是从结果集中取出一个值时， 
+		 都会用类型处理器将获取的值以合适的方式转换成 Java 类型 -->
+	<!-- <typeHandlers></typeHandlers> -->
+
+	<!-- 对象工厂 
+		 MyBatis 每次创建结果对象的新实例时，它都会使用一个对象工厂（ObjectFactory）实例来完成。 
+		 默认的对象工厂需要做的仅仅是实例化目标类，要么通过默认构造方法，要么在参数映射存在的时候通过参数构造方法来实例化。 
+		 如果想覆盖对象工厂的默认行为，则可以通过创建自己的对象工厂来实现。 -->
+	<!-- <objectFactory type=""></objectFactory> -->
+
+	<!-- 插件
+		 MyBatis 允许你在已映射语句执行过程中的某一点进行拦截调用。 默认情况下，MyBatis 允许使用插件来拦截的方法调用包括： 
+		 Executor (update, query, flushStatements, commit, rollback, getTransaction, close, isClosed) 
+		 ParameterHandler (getParameterObject, setParameters) 
+		 ResultSetHandler (handleResultSets, handleOutputParameters) 
+		 StatementHandler (prepare, parameterize, batch, update, query) 
+		 这些类中方法的细节可以通过查看每个方法的签名来发现，或者直接查看 MyBatis 的发行包中的源代码。 
+		 假设你想做的不仅仅是监控方法的调用，那么你应该很好的了解正在重写的方法的行为。 
+		 因为如果在试图修改或重写已有方法的行为的时候，你很可能在破坏 MyBatis 的核心模块。 
+		 这些都是更低层的类和方法，所以使用插件的时候要特别当心。 
+		 通过 MyBatis 提供的强大机制，使用插件是非常简单的，只需实现 Interceptor 接口，并指定了想要拦截的方法签名即可。 -->
+	<!-- <plugins> -->
+	<!-- 	<plugin interceptor=""></plugin> -->
+	<!-- </plugins> -->
+
+	<!-- 配置环境 MyBatis 可以配置成适应多种环境，这种机制有助于将 SQL 映射应用于多种数据库之中， 现实情况下有多种理由需要这么做。 
+		 例如，开发、测试和生产环境需要有不同的配置；或者共享相同 Schema 的多个生产数据库， 想使用相同的 SQL 映射。 
+		 默认的环境 ID（比如:default=”development”）。 
+		 每个 environment 元素定义的环境 ID（比如:id=”development”）。 
+		 事务管理器的配置（比如:type=”JDBC”）。 
+		 数据源的配置（比如:type=”POOLED”）。 
+		
+		和spring整合后environments配置将废除 -->
+	<environments default="development">
+		<environment id="development">
+			<!-- 事务管理器 在 MyBatis 中有两种类型的事务管理器（也就是 type=”[JDBC|MANAGED]”）： 
+				 JDBC – 这个配置就是直接使用了 JDBC 的提交和回滚设置，它依赖于从数据源得到的连接来管理事务作用域。 
+				 MANAGED – 这个配置几乎没做什么。它从来不提交或回滚一个连接，而是让容器来管理事务的整个生命周期（比如 JEE 应用服务器的上下文）。 
+				 			默认情况下它会关闭连接，然而一些容器并不希望这样，因此需要将 closeConnection 属性设置为 false 来阻止它默认的关闭行为 -->
+			<!-- <transactionManager type="MANAGED"> -->
+			<!-- 	<property name="closeConnection" value="false"/> -->
+			<!-- </transactionManager> -->
+			<!-- 使用JDBC管理事物 -->
+			<transactionManager type="JDBC" />
+			<!-- 数据库连接池 -->
+			<dataSource type="POOLED">
+				<property name="driver" value="${jdbc.driverClass}" />
+				<property name="url" value="${jdbc.jdbcUrl}" />
+				<property name="username" value="${jdbc.user}" />
+				<property name="password" value="${jdbc.password}" />
+				<property name="driver.encoding" value="UTF-8" />
+			</dataSource>
+		</environment>
+	</environments>
+	<!-- 映射器 加载映射文件 -->
+	<mappers>
+		<!-- 四种方式映射 -->
+		<!-- <mapper resource="mapper/UserMapper.xml" /> -->
+		<!-- <mapper url="file:/E:/workspace/y2/maven/mybatis/target/classes/mapper/UserMapper.xml"/> -->
+		<!-- <mapper class="mapper.UserMapper" /> -->
+		<!-- 和spring整合后，使用mapper扫描器，这里就不需要配置了 -->
+		<!-- <package name="mapper" /> -->
+	</mappers>
+</configuration>

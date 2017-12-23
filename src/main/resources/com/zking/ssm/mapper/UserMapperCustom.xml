@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- namespace名称空间,作用就是对sql进行分类化管理，理解为sql隔离
+	注意：使用mapper代理方法开发，namespace有特殊重要的作用，namespace等于mapper接口地址
+ -->
+<mapper namespace="com.zking.ssm.mapper.UserMapperCustom">
+
+	<!-- 开启本mapper的namespace下的二级缓存
+		 type:指定cache接口的实现类的类型,mybatis默认使用PerpetualCache
+		 要和ehcache整合,需要配置type为ehcache实现cache接口的类型
+	 -->
+	<cache type="org.mybatis.caches.ehcache.EhcacheCache"></cache>
+
+	<!-- 定义sql片段
+		 id:sql片段的唯一标识
+		 
+		 经验：是基于单表来定义sql片段，这样的话这个sql片段重用性才高
+		 在sql片段不要包含where -->
+	<sql id="query_user_where">
+		<if test="null!=userCustom">
+			<if test="null!=userCustom.userName and ''!=userCustom.userName">
+				and user_name = #{userCustom.userName}
+			</if>
+			<if test="null!=userCustom.userPwd and ''!=userCustom.userPwd">
+				and user_pwd = #{userCustom.userPwd}
+			</if>
+			<if test="null!=user_ids">
+				<!-- 使用foreach遍历传入的user_ids
+					 collection：指定输入对象中传入的集合属性
+					 item：每个遍历生成对象名
+					 open：开始遍历时拼接串
+					 close：结束遍历时拼接串
+					 separator：遍历两个对象需要拼接的串 -->
+				<!-- 实现以下sql拼接
+					 and (user_id = 1 or user_id = 4 or user_id = 6) -->
+				<!-- <foreach collection="user_ids" item="user_id" open="and (" close=")" separator="or">
+					每次遍历需要拼接的串
+					user_id = #{user_id}
+				</foreach> -->
+				<!-- 实现以下sql拼接
+					 and user_id in (1,4,6) -->
+				<foreach collection="user_ids" item="user_id" open="and user_id in(" close=")" separator=",">
+					<!-- 每次遍历需要拼接的串 -->
+					#{user_id}
+				</foreach>
+			</if>
+		</if>
+	</sql>
+
+	<!-- 定义resultMap
+		 type：resultMap最终映射的java对象类型
+		 id：对resultMap的唯一标识 -->
+	<resultMap type="user" id="userResultMap">
+		<!-- id表示查询结果集中唯一标识
+			 column：查询出来的列名
+			 property：type指定的pojo类型中的属性名
+			 最终resultMap将column和property做映射关系（对应关系） -->
+		<id column="user_id_" property="userId"/>
+		
+		<!-- column表示对普通列映射定义
+			 column：查询出来的列名
+			 property：type指定的pojo类型中的属性名
+			 最终resultMap将column和property做映射关系（对应关系） -->
+		<result column="user_name_" property="userName"/>
+		<result column="user_pwd_" property="userPwd"/>
+	</resultMap>
+
+	<!-- id:标识映射文件中的sql
+		 将sql语句封装到mappedStatement对象中，所以将id称为statement的id
+		 parameterType 输入参数类型
+		 resultType 输出参数类型 对单条记录
+		 #{abc} 占位符 参数名可以随意
+		 ${value} 拼接符 参数名只能是value -->
+		
+	<!-- 综合查询 -->
+	<select id="findUserList" parameterType="userQueryOv"
+		resultType="userCustom">
+		select * from t_user 
+		<!-- where user_name = #{userCustom.userName} and user_pwd = #{userCustom.userPwd} -->
+		<!-- where可以自动去掉条件中的第一个and -->
+		<where>
+			<!-- <if test="null!=userCustom"> -->
+			<!-- 	<if test="null!=userCustom.userName and ''!=userCustom.userName"> -->
+			<!-- 		and user_name = #{userCustom.userName} -->
+			<!-- 	</if> -->
+			<!-- 	<if test="null!=userCustom.userPwd and ''!=userCustom.userPwd"> -->
+			<!-- 		and user_pwd = #{userCustom.userPwd} -->
+			<!-- 	</if> -->
+			<!-- </if> -->
+			<!-- 引用sql片段的id，如果refid不在本mapper文件中，需要加上namespace -->
+			<include refid="query_user_where"></include>
+			<!-- 这里还能应用其它sql片段 -->
+		</where>
+	</select>
+	<!-- 综合查询总数 -->
+	<select id="findUserCount" parameterType="userQueryOv"
+		resultType="int">
+		select count(*) from t_user 
+		<!-- where user_name = #{userCustom.userName} and user_pwd = #{userCustom.userPwd} -->
+		<!-- where可以自动去掉条件中的第一个and -->
+		<where>
+			<!-- <if test="null!=userCustom"> -->
+			<!-- 	<if test="null!=userCustom.userName and ''!=userCustom.userName"> -->
+			<!-- 		and user_name = #{userCustom.user_name} -->
+			<!-- 	</if> -->
+			<!-- 	<if test="null!=userCustom.userPwd and ''!=userCustom.userPwd"> -->
+			<!-- 		and user_pwd = #{userCustom.userPwd} -->
+			<!-- 	</if> -->
+			<!-- </if> -->
+			<!-- 引用sql片段的id，如果refid不在本mapper文件中，需要加上namespace -->
+			<include refid="query_user_where"></include>
+			<!-- 这里还能应用其它sql片段 -->
+		</where>
+	</select>
+	<!-- 根据ID查询 使用resultMap进行输出映射
+		 resultMap：指定定义的resultMap的id，如果resultMap在其它的mapper文件，前面需要加上namespace
+	 -->
+	<select id="findUserByIdResultMap" parameterType="java.lang.Integer"
+		resultMap="userResultMap">
+		select user_id user_id_,user_name user_name_,user_pwd user_pwd_ from t_user where user_id = #{userId}
+	</select>
+	<!-- 根据ID查询 禁用二级缓存 -->
+	<select id="findUserById" parameterType="java.lang.Integer"
+		resultType="com.zking.ssm.model.User" useCache="false">
+		select * from t_user where user_id = #{userId}
+	</select>
+	<!-- 根据名字查询 -->
+	<select id="findUserByName" parameterType="java.lang.String"
+		resultType="com.zking.ssm.model.User">
+		select * from t_user where user_name like #{userName}
+	</select>
+	<!-- 根据名字模糊查询 -->
+	<select id="findUserByName2" parameterType="java.lang.String"
+		resultType="com.zking.ssm.model.User">
+		select * from t_user where user_name like '%${value}%'
+	</select>
+	<!-- 根据名字和密码查询 -->
+	<select id="findUserByNamePwd" parameterType="com.zking.ssm.model.User"
+		resultType="com.zking.ssm.model.User">
+		select * from t_user where user_name = #{userName} and user_pwd = #{userPwd}
+	</select>
+	<!-- 查询全部 -->
+	<select id="findUser" resultType="com.zking.ssm.model.User">
+		select * from t_user
+	</select>
+
+	<!-- 新增 -->
+	<insert id="insertUser" parameterType="com.zking.ssm.model.User">
+	   <!-- 将插入数据的主键返回，返回到user对象中 
+			select last_insert_id()：得到刚刚insert进去记录的主键值，只适用于自增主键 
+			keyProperty：将查询到的主键值设置到keyProperty指定的对象的那个属性当中去
+			order：AFTER 在执行insert之后执行 
+				   BEFORE 在执行Insert之前执行 resultType 结果类型 -->
+		<selectKey keyProperty="user_id" order="AFTER" resultType="java.lang.Integer">
+			select last_insert_id()
+		</selectKey>
+
+		insert into t_user(user_name,user_pwd,age,hobby,type)
+					values(#{userName},#{userPwd},#{age},#{hobby},#{type})
+	</insert>
+
+	<!-- 根据ID修改 -->
+	<update id="updateUser" parameterType="com.zking.ssm.model.User">
+		update t_user set
+		user_name = #{userName},user_pwd=#{userPwd},age=#{age},hobby=#{hobby},type=#{type}
+		where user_id = #{userId}
+	</update>
+
+	<!-- 根据ID删除 -->
+	<delete id="deleteUser" parameterType="java.lang.Integer">
+		delete from t_user where user_id = #{user_id}
+	</delete>
+</mapper>

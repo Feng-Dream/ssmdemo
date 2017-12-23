@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+	<!-- 加载配置文件 -->
+	<context:property-placeholder location="classpath:db.properties" />
+	
+	<context:component-scan base-package="com.zking.ssm"></context:component-scan>
+
+	<!-- 数据库，使用C3P0连接池 -->
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+		<property name="driverClass" value="${jdbc.driverClass}"></property>
+		<property name="jdbcUrl" value="${jdbc.jdbcUrl}"></property>
+		<property name="user" value="${jdbc.user}"></property>
+		<property name="password" value="${jdbc.password}"></property>
+		
+		<!--连接池中保留的最小连接数。 -->
+		<property name="minPoolSize" value="3" />
+
+		<!--连接池中保留的最大连接数。Default: 15 -->
+		<property name="maxPoolSize" value="15" />
+
+		<!--初始化时获取的连接数，取值应在minPoolSize与maxPoolSize之间。Default: 3 -->
+		<property name="initialPoolSize" value="3" />
+
+		<!--最大空闲时间,60秒内未使用则连接被丢弃。若为0则永不丢弃。Default: 0 -->
+		<property name="maxIdleTime" value="60" />
+
+		<!--当连接池中的连接耗尽的时候c3p0一次同时获取的连接数。Default: 3 -->
+		<property name="acquireIncrement" value="3" />
+
+		<!--JDBC的标准参数，用以控制数据源内加载的PreparedStatements数量。但由于预缓存的statements 属于单个connection而不是整个连接池。所以设置这个参数需要考虑到多方面的因素。 
+			如果maxStatements与maxStatementsPerConnection均为0，则缓存被关闭。Default: 0 -->
+		<property name="maxStatements" value="0" />
+
+		<!--每60秒检查所有连接池中的空闲连接。Default: 0 -->
+		<property name="idleConnectionTestPeriod" value="60" />
+
+		<!--定义在从数据库获取新连接失败后重复尝试的次数。Default: 30 -->
+		<property name="acquireRetryAttempts" value="30" />
+
+		<!--获取连接失败将会引起所有等待连接池来获取连接的线程抛出异常。
+			但是数据源仍有效 保留，并在下次调用getConnection()的时候继续尝试获取连接。
+			如果设为true，那么在尝试获取连接失败后该数据源将申明已断开并永久关闭。
+			Default: false -->
+		<property name="breakAfterAcquireFailure" value="true" />
+	</bean>
+
+	<!-- sqlSessionFactory -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<!-- 加载mybatis的配置文件 -->
+		<property name="configLocation">
+			<value>classpath:mybatis/configuration.xml</value>
+		</property>
+		<!-- 数据源 -->
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<!-- 原始DAO接口 -->
+	<!-- <bean id="userDao" class="dao.impl.UserDaoImpl2">
+		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+	</bean> -->
+	
+	<!-- mapper配置
+		 MapperFactoryBean:根据Mapper接口生成代理对象
+	 -->
+	<!-- <bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+		mapperInterface指定mapper接口
+		<property name="mapperInterface" value="mapper.UserMapper"></property>
+		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+	</bean> -->
+	
+	<!-- mapper批量扫描，从mapper包中扫描mapper接口，自动创建代理对象并且在spring容器中注册
+		 遵循规范:将mapper.java接口类名和mapper.xml映射文件名称保持一致,且在一个目录中
+		 自动扫描出来的mapper的bean的id为mapper类名(首字母小写)
+	 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<!-- 指定扫描的包名
+			 如果扫描多个包,每个包中间使用半角逗号分隔
+		 -->
+		<property name="basePackage" value="com.zking.ssm.mapper"></property>
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+	</bean>
+</beans>

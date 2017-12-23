@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<ehcache>
+	<!-- 当EHCache要把数据保存硬盘时，将会被保存到path属性指定的目录 -->
+	<diskStore path="D:\\temp" />
+	<!-- 
+		name：缓存的名字(必须是要缓存的对象的完整类名)
+		maxElementsInMemory：设置内存中缓存可存放对象的最大数目
+		eternal：true表示对象永不过期，而 timeToIdleSeconds、timeToLiveSeconds属性则无效
+		timeToIdleSeconds：设置对象空闲状态的最长时间，超过将被销毁
+		timeToLiveSeconds：设置对象允许存在于缓存中的最长时间，超过将被销毁
+		overflowToDisk：如果为true当基于内存的对象大于maxElementsInMemory属性的设置值时，会将对象写到硬盘中
+	-->
+
+	<!--默认的缓存设置-->
+	<defaultCache maxElementsInMemory="1000" eternal="false"
+		timeToIdleSeconds="300" timeToLiveSeconds="600"
+		overflowToDisk="false" />
+
+	<!-- 指定名称的缓存 -->
+	<cache name="entity.User" maxElementsInMemory="10" eternal="false"
+		timeToIdleSeconds="300" timeToLiveSeconds="600" overflowToDisk="true" />
+</ehcache>

@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+    <!-- 配置Handler -->
+    <bean id="itemController1" name="/queryItemList1.action" class="com.zking.ssm.controller.ItemController1"></bean>
+    <bean id="itemController2" name="/queryItemList2.action" class="com.zking.ssm.controller.ItemController2"></bean>
+    <!-- 对于注解的Handler可以单个配置
+         实际开发中建议使用组件扫描
+     -->
+    <!-- <bean class="controller.ItemController3"></bean> -->
+    <!-- 可以扫描controller、service、......
+         这里让扫描controller,指定controller的包
+     -->
+    <context:component-scan base-package="com.zking.ssm.controller"></context:component-scan>
+
+    <!-- 处理器映射器
+         将bean的name作为url进行查找,需要在配置Handler时指定beanneme(就是url)
+         所有处理器映射器都实现HandlerMapping接口
+     -->
+    <bean class="org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping"></bean>
+    <bean class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+        <property name="mappings">
+            <props>
+                <prop key="/queryItemList11.action">itemController1</prop>
+                <prop key="/queryItemList12.action">itemController1</prop>
+                <prop key="/queryItemList22.action">itemController2</prop>
+                <prop key="/queryItemList22.action">itemController2</prop>
+            </props>
+        </property>
+    </bean>
+
+    <!-- 注解处理器映射器 -->
+    <!--<bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping"></bean>-->
+    <!-- 注解处理器适配器 -->
+    <!--<bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter"></bean>-->
+    <!-- 使用mvc:annotation-driven代替上边注解处理器映射器和注解处理器适配器 -->
+    <mvc:annotation-driven conversion-service="conversionService" validator="validator"></mvc:annotation-driven>
+
+    <!-- 处理器适配器
+         所有处理器适配器都实现HandlerAdapter接口
+     -->
+    <bean class="org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter"></bean>
+    <bean class="org.springframework.web.servlet.mvc.HttpRequestHandlerAdapter"></bean>
+
+    <!-- 视图解析器 -->
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <!-- 配置jsp路径的前缀 -->
+        <property name="prefix" value="/WEB-INF/jsp/"></property>
+        <!-- 配置jsp路径的后缀 -->
+        <property name="suffix" value=".jsp"></property>
+    </bean>
+
+    <!-- 自定义参数绑定 -->
+    <bean id="conversionService" class="org.springframework.format.support.FormattingConversionServiceFactoryBean">
+        <!-- 转换器 -->
+        <property name="converters">
+            <list>
+                <!-- 日期类型转换 -->
+                <bean class="com.zking.ssm.controller.converter.CustomDateConverter"></bean>
+            </list>
+        </property>
+    </bean>
+
+    <!--校验器-->
+    <bean id="validator" class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean">
+        <!--校验器-->
+        <property name="providerClass" value="org.hibernate.validator.HibernateValidator"/>
+        <!--指定校验使用的资源文件，在文件中配置校验错误信息，如果不指定默认使用classpath下的ValidationMessages.properties-->
+        <property name="validationMessageSource" ref="messageSource"/>
+    </bean>
+    <!--校验错误信息配置文件-->
+    <bean id="messageSource" class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+        <!--资源文件名-->
+        <property name="basenames">
+            <list>
+                <value>classpath:CustomValidationMessages</value>
+            </list>
+        </property>
+        <!--资源文件编码格式-->
+        <property name="defaultEncoding" value="UTF-8"/>
+        <!--对资源文件内容缓存时间，单位:秒-->
+        <property name="cacheSeconds" value="120"/>
+    </bean>
+
+    <!--全局异常处理器
+        只要实现HandlerExceptionResolver接口计算全局异常处理器
+    -->
+    <bean class="com.zking.ssm.exception.CustomExceptionResolver"/>
+
+    <!--文件上传-->
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <!--设置上传文件的最大尺寸为5MB-->
+        <property name="maxUploadSize">
+            <value>5242880</value>
+        </property>
+    </bean>
+
+    <!--拦截器-->
+    <mvc:interceptors>
+        <!--多个拦截器，顺序执行-->
+        <mvc:interceptor>
+            <!--/**表示所有url包括url路径-->
+            <mvc:mapping path="/**"/>
+            <bean class="com.zking.ssm.interceptor.HandlerInterceptor1"/>
+        </mvc:interceptor>
+        <mvc:interceptor>
+            <!--/**表示所有url包括url路径-->
+            <mvc:mapping path="/**"/>
+            <bean class="com.zking.ssm.interceptor.HandlerInterceptor2"/>
+        </mvc:interceptor>
+    </mvc:interceptors>
+</beans>

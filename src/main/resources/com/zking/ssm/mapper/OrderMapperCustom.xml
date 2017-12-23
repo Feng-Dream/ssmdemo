@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ <!-- namespace名称空间,作用就是对sql进行分类化管理，理解为sql隔离
+	注意：使用mapper代理方法开发，namespace有特殊重要的作用，namespace等于mapper接口地址
+ --> 
+<mapper namespace="com.zking.ssm.mapper.OrderMapperCustom">
+	
+	<select id="findOrderUser" resultType="com.zking.ssm.model.OrderCustom">
+		select o.*,u.user_name,u.user_pwd,u.age,u.type,u.address,u.sex 
+				from t_order o, t_user u 
+				where o.user_id = u.user_id
+	</select>
+	
+	<resultMap type="com.zking.ssm.model.Order" id="OrderUserResultMap">
+		<id column="id" property="id"/>
+		<result column="user_id" property="userId"/>
+		<result column="number" property="number"/>
+		<result column="createtime" property="createtime"/>
+		<result column="note" property="note"/>
+		<association property="user" javaType="com.zking.ssm.model.User">
+			<id column="user_id" property="userId"/>
+			<result column="user_name" property="userName"/>
+			<result column="user_pwd" property="userPwd"/>
+			<result column="age" property="age"/>
+			<result column="type" property="type"/>
+			<result column="address" property="address"/>
+			<result column="sex" property="sex"/>
+		</association>
+	</resultMap>
+	<select id="findOrderUserResultMap" resultMap="OrderUserResultMap">
+		select o.*,u.user_name,u.user_pwd,u.age,u.type,u.address,u.sex 
+				from t_order o, t_user u 
+				where o.user_id = u.user_id
+	</select>
+	
+	<resultMap type="com.zking.ssm.model.Order" id="OrderUserAndOrderDetailResultMap" extends="OrderUserResultMap">
+		<collection property="orderDetails" ofType="com.zking.ssm.model.OrderDetail">
+			<id column="od_id" property="id"/>
+			<result column="id" property="orderId"/>
+			<result column="item_id" property="itemId"/>
+			<result column="item_num" property="itemNum"/>
+		</collection>
+	</resultMap>
+	<select id="findOrderUserAndOrderDetailResultMap" resultMap="OrderUserAndOrderDetailResultMap">
+		select o.*,u.user_name,u.user_pwd,u.age,u.type,u.address,u.sex, od.item_id, od.item_num, od.id od_id
+				from t_order o, t_user u, t_orderdetail od
+				where o.user_id = u.user_id
+				and o.id = od.order_id
+	</select>
+	
+	<resultMap type="com.zking.ssm.model.User" id="UserAndItemResultMap">
+		<id column="user_id" property="userId"/>
+		<result column="user_name" property="userName"/>
+		<result column="user_pwd" property="userPwd"/>
+		<result column="age" property="age"/>
+		<result column="type" property="type"/>
+		<result column="address" property="address"/>
+		<result column="sex" property="sex"/>
+	
+		<collection property="orders" ofType="com.zking.ssm.model.Order">
+			<id column="id" property="id"/>
+			<result column="user_id" property="userId"/>
+			<result column="number" property="number"/>
+			<result column="createtime" property="createtime"/>
+			<result column="note" property="note"/>
+			
+			<collection property="orderDetails" ofType="com.zking.ssm.model.OrderDetail">
+				<id column="od_id" property="id"/>
+				<result column="id" property="orderId"/>
+				<result column="item_id" property="itemId"/>
+				<result column="item_num" property="itemNum"/>
+				
+				<association property="item" javaType="com.zking.ssm.model.Item">
+					<id column="item_id" property="id"/>
+					<result column="item_name" property="name"/>
+					<result column="item_price" property="price"/>
+					<result column="item_createtime" property="createtime"/>
+				</association>
+			</collection>
+		</collection>
+	</resultMap>
+	<select id="findUserAndItemResultMap" resultMap="UserAndItemResultMap">
+		select o.*,u.user_name,u.user_pwd,u.age,u.type,u.address,u.sex, od.item_id, od.item_num, od.order_id, i.name item_name, i.price item_price, i.detail item_detail, i.createtime item_createtime
+				from t_order o, t_user u, t_orderdetail od, t_item i
+				where o.user_id = u.user_id
+				and o.id = od.order_id
+				and od.item_id = i.id
+	</select>
+	
+	<resultMap type="com.zking.ssm.model.Order" id="OrderUserLazyLoading">
+		<id column="id" property="id"/>
+		<result column="user_id" property="userId"/>
+		<result column="number" property="number"/>
+		<result column="createtime" property="createtime"/>
+		<result column="note" property="note"/>
+		<!-- 实现对用户进行延迟加载
+			 select:指定延迟加载需要执行的statement的id(是根据user_id查询用户信息的statement)
+			 column:订单信息关联用户查询的列,是user_id
+			 
+		 -->
+		<association property="user" javaType="com.zking.ssm.model.User" select="com.zking.ssm.mapper.UserMapperCustom.findUserById" column="user_id">
+			<id column="user_id" property="userId"/>
+			<result column="user_name" property="userName"/>
+			<result column="user_pwd" property="userPwd"/>
+			<result column="age" property="age"/>
+			<result column="type" property="type"/>
+			<result column="address" property="address"/>
+			<result column="sex" property="sex"/>
+		</association>
+	</resultMap>
+	<select id="findOrderUserLazyLoading" resultMap="OrderUserLazyLoading">
+		select * from t_order
+	</select>
+</mapper>
